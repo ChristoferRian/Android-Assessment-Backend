@@ -26,11 +26,16 @@ class ADBRepository:
             The command output as a string
         """
         full_command = f"{self.adb_path} -s {device_id} shell {command}"
-        process = await asyncio.create_subprocess_shell(
-            full_command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        try:
+            process = await asyncio.create_subprocess_shell(
+                full_command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+        except FileNotFoundError:
+            raise Exception(
+                "ADB executable not found. Install Android platform-tools and ensure 'adb' is in PATH."
+            )
         
         stdout, stderr = await process.communicate()
         
@@ -47,11 +52,16 @@ class ADBRepository:
         Returns:
             List of device IDs
         """
-        process = await asyncio.create_subprocess_shell(
-            f"{self.adb_path} devices",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        try:
+            process = await asyncio.create_subprocess_shell(
+                f"{self.adb_path} devices",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+        except FileNotFoundError:
+            raise Exception(
+                "ADB executable not found. Install Android platform-tools and ensure 'adb' is in PATH."
+            )
         
         stdout, _ = await process.communicate()
         output = stdout.decode('utf-8')

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, BackgroundTasks, Request
 from typing import List, Dict, Any
 import json
 
@@ -9,19 +9,10 @@ from repositories.brand.brand_factory import BrandFactory
 # Create router
 router = APIRouter()
 
-# Dependencies
-def get_adb_repository():
-    return ADBRepository()
-
-def get_brand_factory(adb_repo: ADBRepository = Depends(get_adb_repository)):
-    return BrandFactory(adb_repo)
-
-def get_device_service(
-    adb_repo: ADBRepository = Depends(get_adb_repository),
-    brand_factory: BrandFactory = Depends(get_brand_factory)
-):
-    # Note: In main.py, we'll pass the WebSocket manager to this service
-    return DeviceService(adb_repo, brand_factory)
+# Dependency to get the shared DeviceService instance
+def get_device_service(request: Request) -> DeviceService:
+    """Get the shared DeviceService instance from app.state"""
+    return request.app.state.device_service
 
 @router.get("/connected")
 async def get_connected_devices(

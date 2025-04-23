@@ -1,41 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from typing import Dict, Any
 import json
 
 from service.scan_service import ScanService
 from service.device_service import DeviceService
-from repositories.adb_repository import ADBRepository
-from repositories.db_repository import DBRepository
-from repositories.brand.brand_factory import BrandFactory
 
 # Create router
 router = APIRouter()
 
-# Dependencies
-def get_adb_repository():
-    return ADBRepository()
+# Dependencies to get shared service instances
+def get_scan_service(request: Request) -> ScanService:
+    """Get the shared ScanService instance from app.state"""
+    return request.app.state.scan_service
 
-def get_db_repository():
-    db_repo = DBRepository()
-    return db_repo
-
-def get_brand_factory(adb_repo: ADBRepository = Depends(get_adb_repository)):
-    return BrandFactory(adb_repo)
-
-def get_device_service(
-    adb_repo: ADBRepository = Depends(get_adb_repository),
-    brand_factory: BrandFactory = Depends(get_brand_factory)
-):
-    # Note: In main.py, we'll pass the WebSocket manager to this service
-    return DeviceService(adb_repo, brand_factory)
-
-def get_scan_service(
-    adb_repo: ADBRepository = Depends(get_adb_repository),
-    db_repo: DBRepository = Depends(get_db_repository),
-    brand_factory: BrandFactory = Depends(get_brand_factory)
-):
-    # Note: In main.py, we'll pass the WebSocket manager to this service
-    return ScanService(adb_repo, db_repo, brand_factory)
+def get_device_service(request: Request) -> DeviceService:
+    """Get the shared DeviceService instance from app.state"""
+    return request.app.state.device_service
 
 @router.post("/{device_id}")
 async def perform_full_scan(

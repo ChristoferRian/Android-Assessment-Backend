@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from fastapi.responses import JSONResponse, FileResponse
 from typing import Dict, Any, List
 import json
@@ -7,30 +7,14 @@ import os
 from datetime import datetime
 
 from service.scan_service import ScanService
-from repositories.adb_repository import ADBRepository
-from repositories.db_repository import DBRepository
-from repositories.brand.brand_factory import BrandFactory
 
 # Create router
 router = APIRouter()
 
-# Dependencies
-def get_adb_repository():
-    return ADBRepository()
-
-def get_db_repository():
-    db_repo = DBRepository()
-    return db_repo
-
-def get_brand_factory(adb_repo: ADBRepository = Depends(get_adb_repository)):
-    return BrandFactory(adb_repo)
-
-def get_scan_service(
-    adb_repo: ADBRepository = Depends(get_adb_repository),
-    db_repo: DBRepository = Depends(get_db_repository),
-    brand_factory: BrandFactory = Depends(get_brand_factory)
-):
-    return ScanService(adb_repo, db_repo, brand_factory)
+# Dependency to get shared service instance
+def get_scan_service(request: Request) -> ScanService:
+    """Get the shared ScanService instance from app.state"""
+    return request.app.state.scan_service
 
 @router.get("/")
 async def get_all_reports(
